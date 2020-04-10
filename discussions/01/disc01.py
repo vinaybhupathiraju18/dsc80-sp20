@@ -19,8 +19,15 @@ def data2array(filepath):
     >>> arr.shape[0]
     100000
     """
+        
+    empty = []
+    file = np.genfromtxt(filepath, delimiter=',')
+    for i in file:
+        empty.append(i)
+    empty.pop(0)
+    full_arr = np.array(empty)
 
-    return ...
+    return full_arr
 
 
 def ends_in_9(arr):
@@ -35,5 +42,17 @@ def ends_in_9(arr):
     >>> 0 <= out <= 1
     True
     """
-
-    return ...
+    
+    full_len = len(arr)
+    nine = 9
+    multiplier = 100
+    ten = 10
+    
+    multiplied = arr * multiplier
+    rounded = np.round(multiplied, 0)
+    modulus = rounded % ten
+    num_nines = np.count_nonzero(modulus == nine)
+    
+    proportion = num_nines / full_len
+    return proportion
+ 

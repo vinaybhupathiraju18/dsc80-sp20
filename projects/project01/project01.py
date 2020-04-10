@@ -31,14 +31,36 @@ def get_assignment_names(grades):
     >>> 'project02' in names['project']
     True
     '''
+    cols = grades.columns
+    keys = ['lab', 'project', 'midterm', 'final', 'disc', 'checkpoint']
+    assignment_dict = dict.fromkeys(keys)
+    assignment_dict['lab'] = [x for x in cols if 'lab' in x and '-' not in x]
+    assignment_dict['project'] = [x for x in cols if 'project' in x and '-' not in x and '_' not in x]
+    assignment_dict['midterm'] = [x for x in cols if 'Midterm' in x and '-' not in x]
+    assignment_dict['final'] = [x for x in cols if 'Final' in x and '-' not in x]
+    assignment_dict['disc'] = [x for x in cols if 'disc' in x and '-' not in x]
+    assignment_dict['checkpoint'] = [x for x in cols if 'checkpoint' in x and '-' not in x]
     
-    return ...
+    return assignment_dict
 
 
 # ---------------------------------------------------------------------
 # Question #2
 # ---------------------------------------------------------------------
 
+def only_proj(df):
+    cols = df.columns
+    project_cols = [x for x in cols if 'project' in x and '-' not in x and '_' not in x]
+    for i in project_cols:
+        df[i] = df[i].fillna(0)
+    return df[project_cols]
+
+def all_proj_detail(df):
+    cols = df.columns
+    project_cols = [x for x in cols if 'project' in x and 'check' not in x and 'Late' not in x]
+    for i in project_cols:
+        df[i] = df[i].fillna(0)
+    return df[project_cols]
 
 def projects_total(grades):
     '''
@@ -55,7 +77,32 @@ def projects_total(grades):
     >>> 0.7 < out.mean() < 0.9
     True
     '''
-    return ...
+    project = only_proj(grades)
+    all_proj = all_proj_detail(grades)
+    # create empty dataframe to store project grades to later take the mean from
+    scores_df = pd.DataFrame()
+    for i in project.columns:
+        # gets number of observations to create series of zeros for when there is no FR section
+        size = len(all_proj[i])
+        fr_score = pd.Series(np.zeros(shape = size))
+        # set fr_max to zero in case no FR section
+        fr_max = 0
+        # gets a series of all projects scores and sets max_pts to max for that project
+        proj_pts = all_proj[i]
+        max_pts = all_proj[i + ' - Max Points'].max()
+        # if there is a FR section, reassign fr variables to series of scores and max value
+        if i + '_free_response' in all_proj.columns:
+            fr_score = all_proj[i + '_free_response']
+            fr_max = all_proj[i + '_free_response - Max Points'].max()
+        # add project pts and fr pts. if no fr section, fr_score should be series of 0s and fr_max should be 0
+        total_pts = proj_pts + fr_score
+        total_max = max_pts + fr_max
+        projects_total = total_pts / int(total_max)
+        scores_df[i] = projects_total
+    
+    scores_df['mean'] = scores_df.mean(axis = 1)
+    
+    return scores_df['mean']
 
 
 # ---------------------------------------------------------------------
@@ -80,14 +127,51 @@ def last_minute_submissions(grades):
     True
     >>> (out > 0).sum()
     8
-    """
+    """ 
+    
+    # get late labs columns
+    cols = grades.columns
+    late_labs = [x for x in cols if 'Lateness' in x and 'lab' in x]
+    assignment_dict = get_assignment_names(grades)
+    labs = assignment_dict['lab']
+    
+    # get nubmer of labs
+    n = len(late_labs)
+    incorrect_late_count = []
 
-    return ...
+    # threshhold s.t. labs turned in on time are still considered late
+    threshhold = '02:30:00'
+    
+    # loop through all lab assignment late columns
+    for lab in late_labs:
+        # get num students that turned in the assingment past the deadline but before threshhold
+        num_incorrect_late = len(grades[(grades[lab] < threshhold) & (grades[lab] > '00:00:00')])
+        incorrect_late_count.append(num_incorrect_late)
+        
+        # changing the gradescope bug so that these students aren't penalized in Q4
+        # bug_index = grades[(grades[lab] < threshhold) & (grades[lab] > '00:00:00')].index
+        # grades[lab][bug_index] = '00:00:00'
+        
+    result = pd.Series(incorrect_late_count)
+    result.index = labs
+    return result
 
 
 # ---------------------------------------------------------------------
 # Question #4
 # ---------------------------------------------------------------------
+
+def penalty(x):
+    threshold = '02:30:00'
+    if x < threshold:
+        x = 1.0
+    elif threshold < x <= '168:00:00':
+        x = 0.9
+    elif '168:00:00' < x <= '336:00:00':
+        x = 0.8
+    elif x > '336:00:00':
+        x = 0.5
+    return x
 
 def lateness_penalty(col):
     """
@@ -103,8 +187,10 @@ def lateness_penalty(col):
     >>> set(out.unique()) <= {1.0, 0.9, 0.8, 0.5}
     True
     """
-        
-    return ...
+
+    penalties = col.apply(penalty)
+    
+    return penalties
 
 
 # ---------------------------------------------------------------------

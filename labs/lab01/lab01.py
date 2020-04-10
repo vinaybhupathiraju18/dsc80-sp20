@@ -1,3 +1,5 @@
+# Vinay Bhupathiraju
+# A14432633
 
 import os
 
@@ -59,7 +61,19 @@ def median(nums):
     True
     """
     
-    return ...
+    size = len(nums)
+    nums.sort()
+    
+    if size % 2 == 1:
+        med = nums[size // 2]
+    # sets med to the mean of the 2 middle values if array has even 
+    # number of elements
+    elif size % 2 == 0: 
+        med1 = nums[size // 2]
+        med2 = nums[(size // 2) - 1]
+        med = (med1 + med2) / 2
+    
+    return med
 
 
 # ---------------------------------------------------------------------
@@ -83,7 +97,16 @@ def same_diff_ints(ints):
     False
     """
 
-    return ...
+    size = len(ints)
+    
+    for i in range(0, size):
+        for j in range(i + 1, size):
+            diff_idx = abs(i - j)
+            diff_vals = abs(ints[i] - ints[j])
+            if diff_idx == diff_vals:
+                return True
+            
+    return False
 
 
 # ---------------------------------------------------------------------
@@ -107,8 +130,13 @@ def prefixes(s):
     'aaaaaraaroaaron'
     """
 
-
-    return ...
+    size = len(s)
+    word = s[0]
+    for i in range(1, size):
+        to_add = s[0:i+1]
+        word = word + to_add        
+        
+    return word
 
 
 # ---------------------------------------------------------------------
@@ -133,7 +161,22 @@ def evens_reversed(N):
     '10 08 06 04 02'
     """
     
-    return ...
+    reversed_list = ''
+    size = len(str(N))
+    
+    even_odd = N % 2
+    if even_odd == 1:
+        N = N - 1
+    
+    for i in range(N, 0, -2):
+        num = str(i)
+        diff = size - len(num)
+        # adds zero padding
+        for i in range(diff):
+            num = '0' + num
+        reversed_list = reversed_list + ' ' + num
+    
+    return reversed_list[1:]
 
 
 # ---------------------------------------------------------------------
@@ -154,7 +197,14 @@ def last_chars(fh):
     'hrg'
     """
 
-    return ...
+    txt = ''
+    
+    with fh as fg:
+        for line in fg:
+            last = line[-2]
+            txt = txt + last
+    
+    return txt
 
 
 # ---------------------------------------------------------------------
@@ -179,7 +229,15 @@ def arr_1(A):
     True
     """
 
-    return ...
+    size = len(A)
+    # creates array of index values
+    B = np.arange(size)
+    B = B**0.5
+    
+    # adds square root of index to initial array elements
+    with_sqrt = A + B
+    
+    return with_sqrt
 
 
 def arr_2(A):
@@ -200,7 +258,7 @@ def arr_2(A):
     True
     """
 
-    return ...
+    return A % 16 == 0
 
 
 def arr_3(A):
@@ -224,7 +282,14 @@ def arr_3(A):
     True
     """
 
-    return ...
+    B = A[0:-1]
+    C = A[1:]
+    
+    # growth formula
+    growth = (C - B) / B
+    growth = np.round(growth, 2)
+
+    return growth
 
 
 def arr_4(A):
@@ -246,7 +311,25 @@ def arr_4(A):
     True
     """
 
-    return ...
+    twenty = 20
+    # number of shares to be purchased each day with $20
+    shares = twenty // A
+    # how much is spent on stocks
+    spent = shares * A
+    # leftover from the $20 not spent on stocks
+    leftover = twenty - spent
+    # running total of leftover to see when we can buy stock on our own
+    running_leftover = leftover.cumsum()
+    # boolean array, True when we can purchase stock with leftover
+    when_to_purchase = running_leftover > A
+    # indeces where you can purchase stock with leftover
+    days = np.where(when_to_purchase == True)
+    # if never, then return -1
+    if days[0].size == 0:
+        return -1
+    day_to_purchase = min(min(days))
+
+    return day_to_purchase
 
 
 # ---------------------------------------------------------------------
@@ -273,7 +356,66 @@ def movie_stats(movies):
     True
     """
 
-    return ...
+    # dictionary to add each key:value pair if it can be computed
+    out_dict = {}
+    
+    try:
+        min_year = movies['Year'].min()
+        max_year = movies['Year'].max()
+        num_years = max_year - min_year
+        out_dict.update(num_years = num_years)
+    except:
+        out_dict = out_dict
+        
+    try: 
+        tot_movies = movies['Number of Movies']
+        out_dict.update(tot_movies = tot_movies)
+    except:
+        out_dict = out_dict
+    
+    try: 
+        least_mov = movies[movies['Number of Movies'] == movies['Number of Movies'].min()]
+        yr_fewest_movies = least_mov['Year'].min()
+        out_dict.update(yr_fewest_movies = yr_fewest_movies)
+    except:
+        out_dict = out_dict
+    
+    try:
+        avg_gross = movies['Total Gross'].mean()
+        out_dict.update(avg_gross = avg_gross)
+    except:
+        out_dict = out_dict
+        
+    try:
+        highest_gross = movies[movies['Total Gross'] == movies['Total Gross'].max()]
+        highest_per_movie = highest_gross['Year'].min()
+        out_dict.update(highest_per_movie = highest_per_movie)
+    except:
+        out_dict = out_dict
+
+    try:
+        # reset index so that I can access second lowest using index
+        by_gross = movies.sort_values('Total Gross').reset_index()
+        second_lowest = by_gross['#1 Movie'][1]
+        out_dict.update(second_lowest = second_lowest)
+    except:
+        out_dict = out_dict
+    
+    try:
+        # find movies with Harry Potter
+        harry = movies[movies['#1 Movie'].str.contains('Harry Potter')]
+        # get years of those movies
+        harry_years = harry['Year']
+        year_after_harry = harry_years + 1
+        year_after_harry = year_after_harry.tolist()
+        # df with only the years after Harry movies
+        movies_after_harry = movies[movies['Year'].isin(year_after_harry)]
+        avg_after_harry = movies_after_harry['Number of Movies'].mean()
+        out_dict.update(avg_after_harry = avg_after_harry)
+    except:
+        out_dict = out_dict
+
+    return pd.Series(out_dict)
     
 
 # ---------------------------------------------------------------------
@@ -310,7 +452,39 @@ def parse_malformed(fp):
     True
     """
 
-    return ...
+    rows = []
+    with open(fp) as fl:
+        cols = fl.readline().strip()
+        cols = cols.split(',')
+        for line in fl:
+            word = line.replace('"', '') # take out " in the geo locations
+            word = word.strip()
+            entry = word.split(',')
+
+            # there are some null (empty) values in the data so take them out
+            if '' in entry:
+                entry = ' '.join(entry).split()
+                
+            # put the geo location together and have it at the end of the list
+            geo = entry[-2] + ',' + entry[-1]
+            entry = entry[:-2]
+            entry.append(geo)
+
+            # add all entries to the row list
+            rows.append(entry)
+
+        # close file to make sure there is no memory leak
+        fl.close()
+
+        # create the data frame and set data types
+        df = pd.DataFrame(rows, columns = cols)
+        df['first'] = df['first'].astype(str)
+        df['last'] = df['last'].astype(str)
+        df['weight'] = df['weight'].astype(np.float64)
+        df['height'] = df['height'].astype(np.float64)
+        df['geo'] = df['geo'].astype(str)
+
+    return df
 
 
 # ---------------------------------------------------------------------
